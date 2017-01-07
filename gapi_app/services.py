@@ -1,53 +1,39 @@
 from __future__ import print_function
 import httplib2
-import os
+import datetime
 
 from apiclient import discovery
 from oauth2client import client
-from oauth2client import tools
-from oauth2client.file import Storage
+from oauth2client.contrib import xsrfutil
+from oauth2client.contrib.django_orm import Storage
+from gapi_app.models import CredentialsModel, FlowModel
+from gapi import settings
+from django.http import HttpResponseRedirect
+from django.http import HttpResponseBadRequest
 
-import datetime
 
-# If modifying these scopes, delete your previously saved credentials
-# at ~/.credentials/calendar-python-quickstart.json
-SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 CLIENT_SECRET_FILE = 'client_secret.json'
+# I will need to change the URI for "prod"
+REDIRECT_URI = 'http://localhost:8000/gapi/oauth2callback'
+FLOW = client.flow_from_clientsecrets(
+    CLIENT_SECRET_FILE,
+    scope='https://www.googleapis.com/auth/calendar.readonly',
+    redirect_uri='http://localhost:8000/oauth2callback')
 APPLICATION_NAME = 'Google Calendar API Python Quickstart'
 
-def get_credentials():
-    """Gets valid user credentials from storage.
-
-    If nothing has been stored, or if the stored credentials are invalid,
-    the OAuth2 flow is completed to obtain the new credentials.
-
-    Returns:
-        Credentials, the obtained credential.
-    """
-    home_dir = os.path.expanduser('~')
-    credential_dir = os.path.join(home_dir, '.credentials')
-    if not os.path.exists(credential_dir):
-        os.makedirs(credential_dir)
-    credential_path = os.path.join(credential_dir,
-                                   'calendar-python-quickstart.json')
-
-    store = Storage(credential_path)
-    credentials = store.get()
-    if not credentials or credentials.invalid:
-        flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
-        flow.user_agent = APPLICATION_NAME
-        credentials = tools.run(flow, store)
-        print('Storing credentials to ' + credential_path)
-    return credentials
-
-def gcal_api_example():
-    """Shows basic usage of the Google Calendar API.
-
-    Creates a Google Calendar API service object and outputs a list of the next
-    10 events on the user's calendar.
-    """
-    credentials = get_credentials()
-    http = credentials.authorize(httplib2.Http())
+def gcal_api_example(request):
+  storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+  credential = storage.get()
+  if credential is None or credential.invalid == True:
+    FLOW.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
+                                                   request.user)
+    authorize_url = FLOW.step1_get_authorize_url()
+    f = FlowModel(id=request.user, flow=FLOW)
+    f.save()
+    return HttpResponseRedirect(authorize_url)
+  else:
+    http = httplib2.Http()
+    http = credential.authorize(http)
     service = discovery.build('calendar', 'v3', http=http)
 
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
@@ -63,3 +49,15 @@ def gcal_api_example():
         start = event['start'].get('dateTime', event['start'].get('date'))
         res += start + event['summary']
     return res
+
+def auth_return_service(request):
+    user = request.user
+    if not xsrfutil.validate_token(
+            settings.SECRET_KEY, request.REQUEST['state'], user):
+        return HttpResponseBadRequest()
+    FLOW = FlowModel.objects.get(id=user).flow
+    credential = FLOW.step2_exchange(request.REQUEST)
+    storage = Storage(CredentialsModel, 'id', user, 'credential')
+    storage.put(credential)
+    return HttpResponseRedirect("/gapi")
+
