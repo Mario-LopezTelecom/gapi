@@ -10,6 +10,7 @@ from gapi_app.models import CredentialsModel, FlowModel
 from gapi import settings
 from django.http import HttpResponseRedirect
 from django.http import HttpResponseBadRequest
+from django.contrib.auth.decorators import login_required
 
 
 CLIENT_SECRET_FILE = 'client_secret.json'
@@ -18,7 +19,7 @@ REDIRECT_URI = 'http://localhost:8000/gapi/oauth2callback'
 FLOW = client.flow_from_clientsecrets(
     CLIENT_SECRET_FILE,
     scope='https://www.googleapis.com/auth/calendar.readonly',
-    redirect_uri='http://localhost:8000/oauth2callback')
+    redirect_uri='http://localhost:8000/gapi/oauth2callback')
 APPLICATION_NAME = 'Google Calendar API Python Quickstart'
 
 def gcal_api_example(request):
@@ -53,10 +54,10 @@ def gcal_api_example(request):
 def auth_return_service(request):
     user = request.user
     if not xsrfutil.validate_token(
-            settings.SECRET_KEY, request.REQUEST['state'], user):
+            settings.SECRET_KEY, request.GET['state'], user):
         return HttpResponseBadRequest()
     FLOW = FlowModel.objects.get(id=user).flow
-    credential = FLOW.step2_exchange(request.REQUEST)
+    credential = FLOW.step2_exchange(request.GET)
     storage = Storage(CredentialsModel, 'id', user, 'credential')
     storage.put(credential)
     return HttpResponseRedirect("/gapi")
