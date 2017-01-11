@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+from oauth2client import client
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,13 +21,17 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '&j(y@2#xynr7jtd@vp!-#%c#gi&oqsfr1)hw0cl*1!px-2(64z'
+FLOW = client.flow_from_clientsecrets(
+    'client_secret_local.json',
+    scope='https://www.googleapis.com/auth/calendar.readonly',
+    redirect_uri='http://www.lvh.me:8000/gapi/oauth2callback')
+
+SECRET_KEY = FLOW.client_secret
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'www.lvh.me']
 
 
 # Application definition

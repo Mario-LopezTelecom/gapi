@@ -3,26 +3,17 @@ import httplib2
 import datetime
 
 from apiclient import discovery
-from oauth2client import client
 from oauth2client.contrib import xsrfutil
 from oauth2client.contrib.django_orm import Storage
 from gapi_app.models import CredentialsModel, FlowModel
 from gapi import settings
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.http import HttpResponseBadRequest
-from django.contrib.auth.decorators import login_required
 
-
-CLIENT_SECRET_FILE = 'client_secret.json'
-# I will need to change the URI for "prod"
-REDIRECT_URI = 'http://localhost:8000/gapi/oauth2callback'
-FLOW = client.flow_from_clientsecrets(
-    CLIENT_SECRET_FILE,
-    scope='https://www.googleapis.com/auth/calendar.readonly',
-    redirect_uri='http://localhost:8000/gapi/oauth2callback')
-APPLICATION_NAME = 'Google Calendar API Python Quickstart'
 
 def gcal_api_example(request):
+  FLOW = settings.FLOW
   storage = Storage(CredentialsModel, 'id', request.user, 'credential')
   credential = storage.get()
   if credential is None or credential.invalid == True:
@@ -49,14 +40,14 @@ def gcal_api_example(request):
     for event in events:
         start = event['start'].get('dateTime', event['start'].get('date'))
         res += start + event['summary']
-    return res
+    return HttpResponse(res)
 
 def auth_return_service(request):
     user = request.user
-    if not xsrfutil.validate_token(
-            settings.SECRET_KEY, request.GET['state'], user):
-        return HttpResponseBadRequest()
     FLOW = FlowModel.objects.get(id=user).flow
+    if not xsrfutil.validate_token(
+            FLOW.client_secret, str(request.GET['state']), user):
+        return HttpResponseBadRequest()
     credential = FLOW.step2_exchange(request.GET)
     storage = Storage(CredentialsModel, 'id', user, 'credential')
     storage.put(credential)
