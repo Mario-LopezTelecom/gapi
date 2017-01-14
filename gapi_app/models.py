@@ -26,6 +26,16 @@ class CalendarEvent(models.Model):
     date_start = models.DateTimeField()
 
 
+class PieSector(models.Model):
+    calendar_id = models.ForeignKey(Calendar)
+    diagram_id = models.ForeignKey(PieDiagram)
+    size = models.FloatField()
+
+
+class PieDiagram(models.Model):
+    date_start = models.DateTimeField()
+    date_end = models.DateTimeField()
+
 
 
 
