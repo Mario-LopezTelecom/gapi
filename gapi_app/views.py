@@ -27,7 +27,7 @@ def index(request):
     else:
         http = httplib2.Http()
         http = credential.authorize(http)
-        service = disc.zovery.build('calendar', 'v3', http=http)
+        service = discovery.build('calendar', 'v3', http=http)
 
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         res = 'Getting the upcoming 10 events'
