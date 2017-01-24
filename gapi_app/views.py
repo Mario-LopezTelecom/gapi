@@ -5,7 +5,7 @@ import datetime
 from apiclient import discovery
 from oauth2client.contrib import xsrfutil
 from oauth2client.contrib.django_orm import Storage
-from gapi_app.models import CredentialsModel, FlowModel
+from gapi_app.models import CredentialsModel, FlowModel, CalendarEvent
 from gapi import settings
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -28,7 +28,6 @@ def index(request):
         http = httplib2.Http()
         http = credential.authorize(http)
         service = discovery.build('calendar', 'v3', http=http)
-
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         res = 'Getting the upcoming 10 events'
         eventsResult = service.events().list(
@@ -39,8 +38,15 @@ def index(request):
         if not events:
             res += 'No upcoming events found.'
         for event in events:
+            # TODO: get calendar_id
+            #CalendarEvent.objects.create(calendar_id =
+            #                             description =
+            #                             date_start =
+            #                             date_end = )
             start = event['start'].get('dateTime', event['start'].get('date'))
             res += start + event['summary']
+
+
         return HttpResponse(res)
 
 @login_required
