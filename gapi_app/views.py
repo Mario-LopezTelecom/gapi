@@ -5,12 +5,13 @@ import datetime
 from apiclient import discovery
 from oauth2client.contrib import xsrfutil
 from oauth2client.contrib.django_orm import Storage
-from gapi_app.models import CredentialsModel, FlowModel, CalendarEvent
+from gapi_app.models import CredentialsModel, FlowModel, Calendar, CalendarEvent
 from gapi import settings
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.http import HttpResponseBadRequest
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 
 @login_required
 def index(request):
@@ -18,8 +19,7 @@ def index(request):
     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
     credential = storage.get()
     if credential is None or credential.invalid == True:
-        FLOW.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
-                                                       request.user)
+        FLOW.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY, request.user)
         authorize_url = FLOW.step1_get_authorize_url()
         f = FlowModel(id=request.user, flow=FLOW)
         f.save()
@@ -29,24 +29,29 @@ def index(request):
         http = credential.authorize(http)
         service = discovery.build('calendar', 'v3', http=http)
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        res = 'Getting the upcoming 10 events'
-        eventsResult = service.events().list(
-            calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
-            orderBy='startTime').execute()
+        page_token = None
+        calendar_ids = []
+        while True:
+            calendar_list = service.calendarList().list(pageToken=page_token).execute()
+            for calendar in calendar_list['items']:
+                cal_id = Calendar.objects.get_or_create(id=calendar['id'], name=calendar['summary'])
+                calendar_ids.append(calendar['id'])
+            page_token = calendar_list.get('nextPageToken')
+            if not page_token:
+                break
+        res = 'Getting the upcoming 10 events of first calendar'
+        eventsResult = service.events().list(calendarId=calendar_ids[0], timeMin=now, maxResults=10, singleEvents=True, orderBy='startTime').execute()
         events = eventsResult.get('items', [])
-
         if not events:
             res += 'No upcoming events found.'
         for event in events:
-            # TODO: get calendar_id
-            #CalendarEvent.objects.create(calendar_id =
-            #                             description =
-            #                             date_start =
-            #                             date_end = )
+            CalendarEvent.objects.get_or_create(id=event['id'],
+                                                calendar_id=calendar_ids[0],
+                                                description=event['summary'],
+                                                date_start=event['start']['dateTime'],
+                                                date_end=event['end']['dateTime'])
             start = event['start'].get('dateTime', event['start'].get('date'))
             res += start + event['summary']
-
-
         return HttpResponse(res)
 
 @login_required
