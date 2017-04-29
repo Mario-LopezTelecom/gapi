@@ -93,7 +93,9 @@ Bonus: Will it be true that [this guy](https://gist.github.com/levicook/563675) 
 + [10] [Django REST Tutorial](http://www.django-rest-framework.org/tutorial/1-serialization/)
 
 ---
+
 High peak of work at my day job
+
 ---
 
 ### Day 8: Jan 20, 2017
@@ -114,10 +116,12 @@ High peak of work at my day job
 **Useful info:**
 + A foreign key field expects an instance of the object referenced, not the id, unless we use the name of the field + "_id" suffix.
 + Whenever I change a model in Django, I will need to run:
+
 ```
 python manage.py makemigrations
 python manage.py migrate
 ```
+
 It seems it is interesting to also commit this files, and so I did. But I am unsure about how to use them (maybe once they are checked out, a dev only has to run "migrate"?)[12] 
 
 + [12][Django docs: Migration](https://docs.djangoproject.com/en/1.10/topics/migrations/)
@@ -128,7 +132,7 @@ Starting new job...
 
 ---
 
-### Day 10: Apr 29, 2017
+### Day 10: Apr 29, 2017
 
 **Today's progress:** my API now returns the duration in seconds of all events of all calendars within a range of dates.
 
