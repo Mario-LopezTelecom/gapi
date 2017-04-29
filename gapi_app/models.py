@@ -19,12 +19,17 @@ class CredentialsModel(models.Model):
 # gapi models
 class Calendar(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
+    user = models.ForeignKey(User)
     name = models.CharField(max_length=100)
-
 
 class CalendarEvent(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
-    calendar = models.ForeignKey(Calendar)
+    calendar = models.ForeignKey(Calendar, related_name="calendar_event")
     description = models.CharField(max_length=100, blank=True, default='')
     date_start = models.DateTimeField()
     date_end = models.DateTimeField()
+
+    @property
+    def duration(self):
+        return self.date_end - self.date_start
+

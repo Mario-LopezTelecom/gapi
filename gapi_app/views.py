@@ -12,6 +12,9 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponseBadRequest
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
+from rest_framework import mixins
+from rest_framework import viewsets
+from serializers import *
 
 @login_required
 def index(request):
@@ -34,7 +37,7 @@ def index(request):
         while True:
             calendar_list = service.calendarList().list(pageToken=page_token).execute()
             for calendar in calendar_list['items']:
-                cal_id = Calendar.objects.get_or_create(id=calendar['id'], name=calendar['summary'])
+                cal_id = Calendar.objects.get_or_create(id=calendar['id'], name=calendar['summary'], user=request.user)
                 calendar_ids.append(calendar['id'])
             page_token = calendar_list.get('nextPageToken')
             if not page_token:
@@ -45,16 +48,16 @@ def index(request):
         if not events:
             res += 'No upcoming events found.'
         for event in events:
-            CalendarEvent.objects.get_or_create(id=event['id'],
-                                                calendar_id=calendar_ids[0],
-                                                description=event['summary'],
-                                                date_start=event['start']['dateTime'],
-                                                date_end=event['end']['dateTime'])
-            start = event['start'].get('dateTime', event['start'].get('date'))
-            res += start + event['summary']
+            if 'dateTime' in event['start']:
+                CalendarEvent.objects.get_or_create(id=event['id'],
+                                                    calendar_id=calendar_ids[0],
+                                                    description=event['summary'],
+                                                    date_start=event['start']['dateTime'],
+                                                    date_end=event['end']['dateTime'])
+                start = event['start'].get('dateTime', event['start'].get('date'))
+                res += start + event['summary']
         return HttpResponse(res)
 
-@login_required
 def auth_return(request):
     user = request.user
     FLOW = FlowModel.objects.get(id=user).flow
@@ -66,3 +69,13 @@ def auth_return(request):
     storage.put(credential)
     return HttpResponseRedirect("/gapi")
 
+
+class CalendarViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = CalendarSerializer
+
+    def get_queryset(self):
+        request_user = self.request.user
+        return Calendar.objects.filter(user=request_user)
