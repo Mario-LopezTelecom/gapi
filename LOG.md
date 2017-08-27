@@ -138,5 +138,17 @@ Starting new job...
 
 **Thoughts:** the next step should be to decide how to handle the download of events for each user that logs in (should I wipe and redownload everything everytime somebody logs in? Or can I set some kind of sync?)
 
-**Useful info:**
--
+**Useful info:** None
+
+---
+
+No good excuse for doing anything...
+
+---
+### Day 11: Aug 27, 2017
+
+**Today's progress:** Remembering what was going on in here... and retrieving all calendars and events.
+
+**Thoughts:** I need to gather like a small to do list of what to do from here and in which order.
+
+**Useful info:** Regarding my previous question, Google Calendar API has support for syncronization through sync tokens. 
