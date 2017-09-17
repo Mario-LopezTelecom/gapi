@@ -161,5 +161,5 @@ No good excuse for doing anything...
 
 **Useful info:** [14] is useful to understand the project structure of Vue.
 
-+[13][Vue-ChartJS web](https://github.com/apertureless/vue-chartjs)
-+[14][Vue Tutorial](https://medium.com/codingthesmartway-com-blog/vue-js-2-quickstart-tutorial-2017-246195cfbdd2
++ [13][Vue-ChartJS web](https://github.com/apertureless/vue-chartjs)
++m[14][Vue Tutorial](https://medium.com/codingthesmartway-com-blog/vue-js-2-quickstart-tutorial-2017-246195cfbdd2
