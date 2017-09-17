@@ -152,3 +152,14 @@ No good excuse for doing anything...
 **Thoughts:** I need to gather like a small to do list of what to do from here and in which order.
 
 **Useful info:** Regarding my previous question, Google Calendar API has support for syncronization through sync tokens. 
+
+### Day 12: Sep 17, 2017
+
+**Today's progress:** First scaffold of the frontend using Vue + Webpack.
+
+**Thoughts:** Read on [13] and try to add a first hardcoded pie chart on the web. Still not commited (should I ignore node_modules?).
+
+**Useful info:** [14] is useful to understand the project structure of Vue.
+
++[13][Vue-ChartJS web](https://github.com/apertureless/vue-chartjs)
++[14][Vue Tutorial](https://medium.com/codingthesmartway-com-blog/vue-js-2-quickstart-tutorial-2017-246195cfbdd2
